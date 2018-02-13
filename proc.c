@@ -1,5 +1,4 @@
 /*
-	Devin Goldstein
 	proc.c
 	COP4600 - Assignment 1
 */

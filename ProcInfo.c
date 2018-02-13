@@ -1,5 +1,4 @@
 /*
-	Devin Goldstein
 	ProcInfo.c
 	COP4600 - Assignment 1
 */

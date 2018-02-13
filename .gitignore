@@ -1,0 +1,7 @@
+.in
+stdafx.c
+stdafx.h
+targetver.h
+.filters
+.vcxproj
+.out

@@ -250,11 +250,12 @@ static bool allProcsHaveArrived(proc *p, int size)
 
 static int shortestCurrBurst(proc *p, int size)
 {
-	int s = 0;
+	int f = -1;
 	int i = 0;
 
 	while (i + 1 != size)
 	{
+		int s;
 		if (!p[i + 1].done && p[i + 1].hasArrived)
 			s = i + 1;
 
@@ -268,8 +269,13 @@ static int shortestCurrBurst(proc *p, int size)
 			else
 				s = i;
 		}
+
+		if (f < 0)
+			f = s;
+		else
+			f = (p[f].burst < p[s].burst) ? f : s;
 		++i;
 	}
 
-	return s;
+	return f;
 }

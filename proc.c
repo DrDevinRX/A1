@@ -53,7 +53,10 @@ void doprocs(proc_info *p)
 	fclose(fp);
 }
 
-int proc_sort_burst(const void *l, const void *r)
+/*
+	Compare function for qsort to sort based on burst
+*/
+static int proc_sort_burst(const void *l, const void *r)
 {
 	int a = ((proc *)l)->burst;
 	int b = ((proc *)r)->burst;
@@ -61,7 +64,10 @@ int proc_sort_burst(const void *l, const void *r)
 	return (a == b) ? 0 : (a > b) ? 1 : (a < b) ? -1 : 2;
 }
 
-int proc_sort_arrival(const void *l, const void *r)
+/*
+	Compare function for qsort to sort based on arrival
+*/
+static int proc_sort_arrival(const void *l, const void *r)
 {
 	int a = ((proc *)l)->arrival;
 	int b = ((proc *)r)->arrival;
@@ -75,7 +81,7 @@ int proc_sort_arrival(const void *l, const void *r)
 static void fcfs(proc_info *p, FILE *fp)
 {
 	int i = 0;
-	int c = 0;
+	int c = 0; // current process's index
 	bool noOtherProcsRunning = true;
 	bool allProcsHaveArrived = false;
 	proc *pc = p->procs;
@@ -128,7 +134,7 @@ static void fcfs(proc_info *p, FILE *fp)
 			fprintf(fp, "Time %d: %s selected (burst %d)\n", i, pc[c].name, pc[c].burst);
 		}
 
-		// Decrease the current processes's burst and increase it's runtime
+		// Decrease the current process's burst and increase it's runtime
 		if (pc[c].running && pc[c].burst)
 		{
 			pc[c].burst--;
@@ -220,7 +226,7 @@ static void sjf(proc_info *p, FILE *fp)
 			}
 		}
 
-		// Decrease the current processes's burst and increase the runtime.
+		// Decrease the current process's burst and increase the runtime.
 		if (pc[curr].running && pc[curr].burst)
 		{
 			--pc[curr].burst;

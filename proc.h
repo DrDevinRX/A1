@@ -17,6 +17,7 @@ typedef struct proc_t
 	int burst;
 	int runtime;
 	int wait;
+	int index;
 	bool hasArrived;
 	bool running;
 	bool done;

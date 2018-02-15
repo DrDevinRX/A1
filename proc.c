@@ -76,6 +76,17 @@ static int proc_sort_arrival(const void *l, const void *r)
 }
 
 /*
+	Compare function for qsort to sort based on arrival
+*/
+static int proc_sort_index(const void *l, const void *r)
+{
+	int a = ((proc *)l)->index;
+	int b = ((proc *)r)->index;
+
+	return (a == b) ? 0 : (a > b) ? 1 : (a < b) ? -1 : 2;
+}
+
+/*
 	First-Come First-Served - Processes are run in the order they arrive
 */
 static void fcfs(proc_info *p, FILE *fp)
@@ -161,6 +172,9 @@ static void fcfs(proc_info *p, FILE *fp)
 
 		i++;
 	}
+
+	// Resort the array back to the original indexes
+	qsort(p->procs, p->procCount, sizeof(*(p->procs)), proc_sort_index);
 
 	// Print process wait and turnaround time.
 	for (i = 0; i < p->procCount; i++)
@@ -254,6 +268,9 @@ static void sjf(proc_info *p, FILE *fp)
 		t++;
 	}
 
+	// Resort the array back to the original indexes
+	qsort(p->procs, p->procCount, sizeof(*(p->procs)), proc_sort_index);
+
 	// Print process wait and turnaround time.
 	for (int i = 0; i < p->procCount; i++)
 	{
@@ -263,7 +280,113 @@ static void sjf(proc_info *p, FILE *fp)
 
 static void rr(proc_info *p, FILE *fp)
 {
-	return;
+	proc *pc = p->procs;
+	bool procIsRunning = false;
+	int curr = 0;
+	bool hasStarted = false;
+	int quantumTime = p->quantum;
+
+	qsort(p->procs, p->procCount, sizeof(*(p->procs)), proc_sort_arrival);
+	int t = 0;
+	int i; // used in for loops
+
+	while (t <= p->time)
+	{
+		if (!pc[curr].done && hasStarted)
+		{
+			if (!pc[curr].burst)
+			{
+				pc[curr].done = true;
+				fprintf(fp, "Time %d: %s finished\n", t, pc[curr].name);
+
+				pc[curr].running = false;
+				procIsRunning = false;
+				quantumTime = t + p->quantum;
+			}
+			/* I rewrote this part to make the logic simpler and not have to add to the quantumTime. */
+			else if (!(t % p->quantum))
+			{
+				pc[curr].running = false;
+				procIsRunning = false;
+				//quantumTime = t + p->quantum;
+			}
+		}
+
+		if (!allProcsAreDone(pc, p->procCount))
+		{
+			for (i = 0; i < p->procCount; i++)
+			{
+				if (pc[i].arrival == t && !pc[i].hasArrived)
+				{
+					pc[i].hasArrived = true;
+					hasStarted = true;
+					fprintf(fp, "Time %d: %s arrived\n", t, pc[i].name);
+				}
+			}
+		}
+
+		// retrieves next waiting process
+		if (!pc[curr].running)
+		{
+			for (i = curr + 1; i < p->procCount; ++i)
+			{
+				if (!pc[i].done && pc[i].hasArrived)
+				{
+					fprintf(fp, "Time %d: %s selected (burst %d)\n", t, pc[i].name, pc[i].burst);
+					pc[i].running = true;
+					break;
+				}
+			}
+			if (i == p->procCount)
+			{
+				for (i = 0; i <= curr; ++i)
+				{
+					if (!pc[i].done && pc[i].hasArrived)
+					{
+						fprintf(fp, "Time %d: %s selected (burst %d)\n", t, pc[i].name, pc[i].burst);
+						pc[i].running = true;
+						break;
+					}
+				}
+			}
+			curr = i;
+		}
+
+		if (pc[curr].running && pc[curr].burst)
+		{
+			--pc[curr].burst;
+			++pc[curr].runtime;
+		}
+
+		for (int i = 0; i < p->procCount; i++)
+		{
+			if (!pc[i].running && !pc[i].done && pc[i].hasArrived)
+				++(pc[i].wait);
+		}
+
+		if (allProcsAreDone(pc, p->procCount) && !procIsRunning)
+		{
+			if (t != p->time)
+			{
+				fprintf(fp, "Time %d: IDLE\n", t);
+			}
+			else
+			{
+				fprintf(fp, "Finished at time %d\n\n", t);
+			}
+		}
+
+		t++;
+	}
+
+	// Resort the array back to the original indexes
+	qsort(p->procs, p->procCount, sizeof(*(p->procs)), proc_sort_index);
+
+	// Print process wait and turnaround time.
+	for (int i = 0; i < p->procCount; i++)
+	{
+		fprintf(fp, "%s wait %d turnaround %d\n", pc[i].name, pc[i].wait, (pc[i].runtime + pc[i].wait));
+	}
 }
 
 /*
@@ -294,7 +417,7 @@ static bool allProcsHaveArrived(proc *p, int size)
 static int shortestCurrBurst(proc *p, int size)
 {
 	int f = -1; // Final index
-	int i = 0; // indexer
+	int i = 0;  // indexer
 
 	// Check each process until we are out of processes
 	while (i + 1 != size)

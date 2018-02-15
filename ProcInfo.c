@@ -16,7 +16,7 @@ int main(void)
 	FILE *fp;
 
 	// Attempt to open the file and if it fails, terminate the program.
-	if (!(fp = fopen("set3_process.in", "r")))
+	if (!(fp = fopen("set2_process.in", "r")))
 	{
 		printf("Could not open file!\n");
 		return 1;
@@ -92,6 +92,7 @@ int main(void)
 				if (j == 7)
 				{
 					p.procs[i].burst = strtol(split, NULL, 10);
+					p.procs[i].index = i;
 					break;
 				}
 			}
